@@ -1,0 +1,80 @@
+#
+export class CorrelationParser extends CstParser {
+    constructor(tokens: TokenType[]) {
+        super(tokens, {
+            recoveryEnabled: true
+        })
+        this.performSelfAnalysis();
+    }
+#
+OrderPrefix {
+    |\_Cascading
+     \_Reverse
+}
+VerbPrefix {
+    |\_Is
+     \_Isnt
+     \_Canbe
+}
+NameListPrefix {
+    ?|\_And
+      \_Or
+      \_Oneof
+}
+NameList {
+    *NameListPrefix
+    _Name
+    1+ {
+        _Comma
+        _Name
+    }
+}
+EscapedPrefix {
+    ?*OrderPrefix
+    ?*VerbPrefix
+    ?*_Not
+    ?*NameListPrefix
+    _Escape
+    _PrefixToken
+}
+EscapedMode {
+    |\_Isnt
+     \_Canbe
+    _Escape
+    _ModeToken
+}
+EscapedLine {
+    |\*EscapedPrefix
+     \*EscapedMode
+}
+Sublines {
+    _LCurly
+    *Lines
+    _RCurly
+}
+NormalLine {
+    ?*OrderPrefix
+    ?*VerbPrefix
+    ?*_Not
+    |\(><NameList)*NameList
+     \_Name
+    ?Sublines
+}
+Line {
+    |\(><EscapedLine)*EscapedLine
+     \*NormalLine
+}
+RootLines {
+    0+ {
+        ?*Line
+        ?_Semicolon
+    }
+}
+=Root {
+    *EscapedMode
+    *RootLines
+}
+
+#
+}
+#

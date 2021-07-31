@@ -1,0 +1,76 @@
+?@Mode
+>+@Prefix
+
+_map_label {
+    ^site, path, area
+}
+_non_map_label {
+    ~|site, path, area
+}
+_origin {
+    ^natural, artificial
+}
+_non_origin {
+    ~|natural, artificial
+}
+_info_type {
+    ^geographic, structural
+}
+_non_info_type {
+    ~|geographic, structural
+}
+
+-map_item {
+    ~|_map_label, _non_map_label
+    ~|_origin, _non_origin
+    ~|_info_type, _non_info_type
+}
+
+artificial {
+    decorative
+    functional
+    area {
+        building_group {
+            settlement
+            neighborhood
+            village
+            town
+            city
+            country
+        }
+    }
+    structural {
+        building {
+            housing
+            functional {
+                machine
+                factory
+                transportation
+            }
+            decorative {
+                painting
+                statue
+            }
+        }
+    }
+}
+geographic {
+    biome_related {
+        plain
+    }
+    canyan
+    peninsula
+    creek
+    river
+    -path {
+        island
+        floating_island
+        pond
+    }
+    area {
+        lake
+        sea
+        ocean
+        continent
+    }
+}

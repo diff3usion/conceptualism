@@ -1,0 +1,189 @@
+{
+  concepts: [
+    'Concept(_map_label, CanbeAnything, Relation(is{_map_label; _non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(site, CanbeAnything, Relation(is{site; _map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [0, 3, 5])',
+    'Concept(path, CanbeAnything, Relation(is{path; _map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [0, 3, 5])',
+    'Concept(area, CanbeAnything, Relation(is{area; _map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [0, 3, 5])',
+    'Concept(_non_map_label, CanbeAnything, Relation(is{_non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(_origin, CanbeAnything, Relation(is{_origin; _non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(natural, CanbeAnything, Relation(is{natural; _non_map_label; _origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 2, 5])',
+    'Concept(artificial, CanbeAnything, Relation(is{artificial; _non_map_label; _origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 2, 5])',
+    'Concept(_non_origin, CanbeAnything, Relation(is{_non_origin; _non_map_label; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(_info_type, CanbeAnything, Relation(is{_info_type; _non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(geographic, CanbeAnything, Relation(is{geographic; _non_map_label; _non_origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 4])',
+    'Concept(structural, CanbeAnything, Relation(is{structural; _non_map_label; _non_origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 4])',
+    'Concept(_non_info_type, CanbeAnything, Relation(is{_non_info_type; _non_map_label; _non_origin}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(map_item, CanbeAnything, Relation(is{map_item; _non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(decorative, CanbeAnything, Relation(is{decorative; _non_map_label; _non_info_type; artificial; _origin}, isnt{}, canbe{}}, , Qualified: [1, 5, 9, 2])',
+    'Concept(functional, CanbeAnything, Relation(is{functional; _non_map_label; _non_info_type; artificial; _origin}, isnt{}, canbe{}}, , Qualified: [1, 5, 10, 2])',
+    'Concept(building_group, CanbeAnything, Relation(is{building_group; _non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(settlement, CanbeAnything, Relation(is{settlement; _non_info_type; artificial; area; building_group; _map_label; _origin}, isnt{}, canbe{}}, , Qualified: [5, 11, 0, 2])',
+    'Concept(neighborhood, CanbeAnything, Relation(is{neighborhood; _non_info_type; artificial; area; building_group; _map_label; _origin}, isnt{}, canbe{}}, , Qualified: [5, 12, 0, 2])',
+    'Concept(village, CanbeAnything, Relation(is{village; _non_info_type; artificial; area; building_group; _map_label; _origin}, isnt{}, canbe{}}, , Qualified: [5, 13, 0, 2])',
+    'Concept(town, CanbeAnything, Relation(is{town; _non_info_type; artificial; area; building_group; _map_label; _origin}, isnt{}, canbe{}}, , Qualified: [5, 14, 0, 2])',
+    'Concept(city, CanbeAnything, Relation(is{city; _non_info_type; artificial; area; building_group; _map_label; _origin}, isnt{}, canbe{}}, , Qualified: [5, 15, 0, 2])',
+    'Concept(country, CanbeAnything, Relation(is{country; _non_info_type; artificial; area; building_group; _map_label; _origin}, isnt{}, canbe{}}, , Qualified: [5, 16, 0, 2])',
+    'Concept(building, CanbeAnything, Relation(is{building; _non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(housing, CanbeAnything, Relation(is{housing; _non_map_label; artificial; structural; building; _origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 17, 2, 4])',
+    'Concept(machine, CanbeAnything, Relation(is{machine; _non_map_label; artificial; structural; building; functional; _origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 18, 2, 4, 10])',
+    'Concept(factory, CanbeAnything, Relation(is{factory; _non_map_label; artificial; structural; building; functional; _origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 19, 2, 4, 10])',
+    'Concept(transportation, CanbeAnything, Relation(is{transportation; _non_map_label; artificial; structural; building; functional; _origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 20, 2, 4, 10])',
+    'Concept(painting, CanbeAnything, Relation(is{painting; _non_map_label; artificial; structural; building; decorative; _origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 21, 2, 4, 9])',
+    'Concept(statue, CanbeAnything, Relation(is{statue; _non_map_label; artificial; structural; building; decorative; _origin; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 22, 2, 4, 9])',
+    'Concept(biome_related, CanbeAnything, Relation(is{biome_related; _non_map_label; _non_origin; _non_info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 5])',
+    'Concept(canyan, CanbeAnything, Relation(is{canyan; _non_map_label; _non_origin; geographic; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 24, 4])',
+    'Concept(peninsula, CanbeAnything, Relation(is{peninsula; _non_map_label; _non_origin; geographic; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 25, 4])',
+    'Concept(creek, CanbeAnything, Relation(is{creek; _non_map_label; _non_origin; geographic; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 26, 4])',
+    'Concept(river, CanbeAnything, Relation(is{river; _non_map_label; _non_origin; geographic; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 27, 4])',
+    'Concept(plain, CanbeAnything, Relation(is{plain; _non_map_label; _non_origin; geographic; biome_related; _info_type}, isnt{}, canbe{}}, , Qualified: [1, 3, 23, 4])',
+    'Concept(island, CanbeAnything, Relation(is{island; _non_map_label; _non_origin; geographic; _info_type}, isnt{path}, canbe{}}, , Qualified: [1, 3, 28, 4])',
+    'Concept(floating_island, CanbeAnything, Relation(is{floating_island; _non_map_label; _non_origin; geographic; _info_type}, isnt{path}, canbe{}}, , Qualified: [1, 3, 29, 4])',
+    'Concept(pond, CanbeAnything, Relation(is{pond; _non_map_label; _non_origin; geographic; _info_type}, isnt{path}, canbe{}}, , Qualified: [1, 3, 30, 4])',
+    'Concept(lake, CanbeAnything, Relation(is{lake; _non_origin; geographic; area; _map_label; _info_type}, isnt{}, canbe{}}, , Qualified: [3, 31, 0, 4])',
+    'Concept(sea, CanbeAnything, Relation(is{sea; _non_origin; geographic; area; _map_label; _info_type}, isnt{}, canbe{}}, , Qualified: [3, 32, 0, 4])',
+    'Concept(ocean, CanbeAnything, Relation(is{ocean; _non_origin; geographic; area; _map_label; _info_type}, isnt{}, canbe{}}, , Qualified: [3, 33, 0, 4])',
+    'Concept(continent, CanbeAnything, Relation(is{continent; _non_origin; geographic; area; _map_label; _info_type}, isnt{}, canbe{}}, , Qualified: [3, 34, 0, 4])'
+  ],
+  qualifications: [
+    [
+      0,
+      'Qualification(false, Group(Oneof, site, path, area, Declaration(Is, _map_label, Relation(is{_map_label}, isnt{}, canbe{}})'
+    ],
+    [
+      1,
+      'Qualification(true, Group(Or, site, path, area, Declaration(Is, _non_map_label, Relation(is{_non_map_label}, isnt{}, canbe{}})'
+    ],
+    [
+      2,
+      'Qualification(false, Group(Oneof, natural, artificial, Declaration(Is, _origin, Relation(is{_origin}, isnt{}, canbe{}})'
+    ],
+    [
+      3,
+      'Qualification(true, Group(Or, natural, artificial, Declaration(Is, _non_origin, Relation(is{_non_origin}, isnt{}, canbe{}})'
+    ],
+    [
+      4,
+      'Qualification(false, Group(Oneof, geographic, structural, Declaration(Is, _info_type, Relation(is{_info_type}, isnt{}, canbe{}})'
+    ],
+    [
+      5,
+      'Qualification(true, Group(Or, geographic, structural, Declaration(Is, _non_info_type, Relation(is{_non_info_type}, isnt{}, canbe{}})'
+    ],
+    [
+      6,
+      'Qualification(true, Group(Or, _map_label, _non_map_label, Declaration(Isnt, map_item, Relation(is{}, isnt{map_item}, canbe{}})'
+    ],
+    [
+      7,
+      'Qualification(true, Group(Or, _origin, _non_origin, Declaration(Isnt, map_item, Relation(is{}, isnt{map_item}, canbe{}})'
+    ],
+    [
+      8,
+      'Qualification(true, Group(Or, _info_type, _non_info_type, Declaration(Isnt, map_item, Relation(is{}, isnt{map_item}, canbe{}})'
+    ],
+    [
+      9,
+      'Qualification(false, decorative, Declaration(Is, artificial, Relation(is{artificial}, isnt{}, canbe{}})'
+    ],
+    [
+      10,
+      'Qualification(false, functional, Declaration(Is, artificial, Relation(is{artificial}, isnt{}, canbe{}})'
+    ],
+    [
+      11,
+      'Qualification(false, settlement, Declaration(Is, artificial,Declaration(Is, area,Declaration(Is, building_group, Relation(is{artificial; area; building_group}, isnt{}, canbe{}})'
+    ],
+    [
+      12,
+      'Qualification(false, neighborhood, Declaration(Is, artificial,Declaration(Is, area,Declaration(Is, building_group, Relation(is{artificial; area; building_group}, isnt{}, canbe{}})'
+    ],
+    [
+      13,
+      'Qualification(false, village, Declaration(Is, artificial,Declaration(Is, area,Declaration(Is, building_group, Relation(is{artificial; area; building_group}, isnt{}, canbe{}})'
+    ],
+    [
+      14,
+      'Qualification(false, town, Declaration(Is, artificial,Declaration(Is, area,Declaration(Is, building_group, Relation(is{artificial; area; building_group}, isnt{}, canbe{}})'
+    ],
+    [
+      15,
+      'Qualification(false, city, Declaration(Is, artificial,Declaration(Is, area,Declaration(Is, building_group, Relation(is{artificial; area; building_group}, isnt{}, canbe{}})'
+    ],
+    [
+      16,
+      'Qualification(false, country, Declaration(Is, artificial,Declaration(Is, area,Declaration(Is, building_group, Relation(is{artificial; area; building_group}, isnt{}, canbe{}})'
+    ],
+    [
+      17,
+      'Qualification(false, housing, Declaration(Is, artificial,Declaration(Is, structural,Declaration(Is, building, Relation(is{artificial; structural; building}, isnt{}, canbe{}})'
+    ],
+    [
+      18,
+      'Qualification(false, machine, Declaration(Is, artificial,Declaration(Is, structural,Declaration(Is, building,Declaration(Is, functional, Relation(is{artificial; structural; building; functional}, isnt{}, canbe{}})'
+    ],
+    [
+      19,
+      'Qualification(false, factory, Declaration(Is, artificial,Declaration(Is, structural,Declaration(Is, building,Declaration(Is, functional, Relation(is{artificial; structural; building; functional}, isnt{}, canbe{}})'
+    ],
+    [
+      20,
+      'Qualification(false, transportation, Declaration(Is, artificial,Declaration(Is, structural,Declaration(Is, building,Declaration(Is, functional, Relation(is{artificial; structural; building; functional}, isnt{}, canbe{}})'
+    ],
+    [
+      21,
+      'Qualification(false, painting, Declaration(Is, artificial,Declaration(Is, structural,Declaration(Is, building,Declaration(Is, decorative, Relation(is{artificial; structural; building; decorative}, isnt{}, canbe{}})'
+    ],
+    [
+      22,
+      'Qualification(false, statue, Declaration(Is, artificial,Declaration(Is, structural,Declaration(Is, building,Declaration(Is, decorative, Relation(is{artificial; structural; building; decorative}, isnt{}, canbe{}})'
+    ],
+    [
+      23,
+      'Qualification(false, plain, Declaration(Is, geographic,Declaration(Is, biome_related, Relation(is{geographic; biome_related}, isnt{}, canbe{}})'
+    ],
+    [
+      24,
+      'Qualification(false, canyan, Declaration(Is, geographic, Relation(is{geographic}, isnt{}, canbe{}})'
+    ],
+    [
+      25,
+      'Qualification(false, peninsula, Declaration(Is, geographic, Relation(is{geographic}, isnt{}, canbe{}})'
+    ],
+    [
+      26,
+      'Qualification(false, creek, Declaration(Is, geographic, Relation(is{geographic}, isnt{}, canbe{}})'
+    ],
+    [
+      27,
+      'Qualification(false, river, Declaration(Is, geographic, Relation(is{geographic}, isnt{}, canbe{}})'
+    ],
+    [
+      28,
+      'Qualification(false, island, Declaration(Is, geographic,Declaration(Isnt, path, Relation(is{geographic}, isnt{path}, canbe{}})'
+    ],
+    [
+      29,
+      'Qualification(false, floating_island, Declaration(Is, geographic,Declaration(Isnt, path, Relation(is{geographic}, isnt{path}, canbe{}})'
+    ],
+    [
+      30,
+      'Qualification(false, pond, Declaration(Is, geographic,Declaration(Isnt, path, Relation(is{geographic}, isnt{path}, canbe{}})'
+    ],
+    [
+      31,
+      'Qualification(false, lake, Declaration(Is, geographic,Declaration(Is, area, Relation(is{geographic; area}, isnt{}, canbe{}})'
+    ],
+    [
+      32,
+      'Qualification(false, sea, Declaration(Is, geographic,Declaration(Is, area, Relation(is{geographic; area}, isnt{}, canbe{}})'
+    ],
+    [
+      33,
+      'Qualification(false, ocean, Declaration(Is, geographic,Declaration(Is, area, Relation(is{geographic; area}, isnt{}, canbe{}})'
+    ],
+    [
+      34,
+      'Qualification(false, continent, Declaration(Is, geographic,Declaration(Is, area, Relation(is{geographic; area}, isnt{}, canbe{}})'
+    ]
+  ]
+}

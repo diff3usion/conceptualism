@@ -1,0 +1,23 @@
+{
+  "name": "correlation",
+  "version": "0.0.1",
+  "description": "DSL for describing and deducing the relations of concepts",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "tsc && node ./build/index.js",
+    "clean": "tsc --build --clean",
+    "test": "mocha"
+  },
+  "dependencies": {
+    "@types/mocha": "^9.0.0",
+    "chevrotain": "^9.0.2",
+    "mocha": "^9.0.3",
+    "ts-node": "^10.1.0",
+    "typescript": "^4.3.5",
+    "yargs": "^17.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^16.4.3"
+  }
+}

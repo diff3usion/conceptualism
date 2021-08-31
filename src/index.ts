@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { inspect } from 'util';
-import { initRelations, qualifyRelations } from './deducer';
+import { initRelations, verifyRelationsRecursively } from './deducer';
 import { analyzeCst, stringifyContext, stringifyQualification, stringifyRelations } from './dsl';
 import { parse } from './dsl'
 
@@ -17,7 +17,7 @@ export const dslTest = () => {
     rel.is.add(ctx.concepts.get("map_item")!)
     rel.is.add(ctx.concepts.get("path")!)
     rel.is.add(ctx.concepts.get("lake")!)
-    const qualified = qualifyRelations(rel, ctx.qualifications)
+    const qualified = verifyRelationsRecursively(rel, ctx.qualifications)
     console.log(qualified.qualified.map(q => stringifyQualification(q)))
     console.log(stringifyRelations(qualified.resolved))
     console.log(qualified.incompatible)

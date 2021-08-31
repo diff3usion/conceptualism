@@ -222,15 +222,15 @@ export const resolveDeclarations: (qualification: ConceptQualification) => Resol
 export type ContextVerifyingResult = {
     resolved: ConceptRelations,
     qualified: ConceptQualification[],
-    incompatible: [ConceptQualification, ConsistencyResult][]
+    unqualified: [ConceptQualification, VerifyingResult][],
+    incompatible: [ConceptQualification, ConsistencyResult][],
 }
 export const verifyRelationsRecursively: (relations: ConceptRelations, qualifications: ConceptQualification[]) => ContextVerifyingResult
     = (relations, qualifications) => {
         let resolved = cloneRelations(relations)
         const maybeQualified: Set<ConceptQualification> = new Set()
         const notQualified: Set<ConceptQualification> = new Set()
-        const newlyQualified: Set<ConceptQualification> = new Set()
-        const incompatible: Set<[ConceptQualification, ConsistencyResult]> = new Set()
+        const unqualifiedResults: Map<ConceptQualification, VerifyingResult> = new Map()
         const resolveMaybeQualified = () => {
             resolved = cloneRelations(relations)
             appendRelations(resolved, ...Array.from(maybeQualified).map(q => q.resolved))
@@ -239,9 +239,14 @@ export const verifyRelationsRecursively: (relations: ConceptRelations, qualifica
             = () => {
                 let nolongerQualified: ConceptQualification[]
                 do {
-                    nolongerQualified = Array.from(maybeQualified).filter(q =>
-                        !verifyRelationsOnce(resolved, q).result ||
-                        !checkTwoRelationsCompatibility(resolved, q.resolved!).result)
+                    nolongerQualified = Array.from(maybeQualified).filter(q => {
+                        const qres = verifyRelationsOnce(resolved, q)
+                        if (!qres.result) {
+                            unqualifiedResults.set(q, qres)
+                            return true
+                        }
+                        return !checkTwoRelationsCompatibility(resolved, q.resolved!).result
+                    })
                     nolongerQualified.forEach(q => {
                         maybeQualified.delete(q)
                         notQualified.add(q)
@@ -249,27 +254,33 @@ export const verifyRelationsRecursively: (relations: ConceptRelations, qualifica
                     })
                 } while (nolongerQualified.length)
             }
+
+        let newlyQualified: ConceptQualification[] = []
+        let incompatible: [ConceptQualification, ConsistencyResult][] = []
         do {
-            if (newlyQualified.size) {
+            if (newlyQualified.length) {
                 newlyQualified.forEach(q => maybeQualified.add(q))
                 resolveMaybeQualified()
             }
-            newlyQualified.clear()
-            incompatible.clear()
             if (maybeQualified.size) solveRecursiveConflicts()
-            qualifications
+            incompatible = []
+            newlyQualified = qualifications
                 .filter(q => !notQualified.has(q) && !maybeQualified.has(q))
-                .filter(q => verifyRelationsOnce(resolved, q).result)
                 .filter(q => {
-                    const compatibility = checkTwoRelationsCompatibility(resolved, q.resolved!)
-                    if (!compatibility.result) incompatible.add([q, compatibility])
-                    return compatibility.result
+                    const res = verifyRelationsOnce(resolved, q)
+                    if (!res.result) unqualifiedResults.set(q, res)
+                    return res.result
                 })
-                .forEach(q => newlyQualified.add(q))
-        } while (newlyQualified.size)
+                .filter(q => {
+                    const res = checkTwoRelationsCompatibility(resolved, q.resolved!)
+                    if (!res.result) incompatible.push([q, res])
+                    return res.result
+                })
+        } while (newlyQualified.length)
         return {
             resolved,
             qualified: Array.from(maybeQualified),
+            unqualified: Array.from(unqualifiedResults).filter(([q]) => !maybeQualified.has(q)),
             incompatible: Array.from(incompatible),
         }
     }

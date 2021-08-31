@@ -1,5 +1,5 @@
 import { CstNode, ILexingError, IRecognitionException } from "chevrotain"
-import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, Concept, ConceptRelations, ConceptDeclaration, ConceptGroup, ConceptQualification, resolveDeclarations, initRelations, qualifyRelations } from "./deducer"
+import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, Concept, ConceptRelations, ConceptDeclaration, ConceptGroup, ConceptQualification, resolveDeclarations, initRelations, verifyRelationsRecursively } from "./deducer"
 import { lexer, tokens } from "./lexer"
 import { CorrelationParser } from "./parser"
 import { EscapedModeNode, EscapedPrefixNode, EscapedLineNode, OrderPrefixNode, VerbPrefixNode, NameListPrefixNode, NormalLineNode, LinesNode, RootNode } from "./typing"
@@ -248,7 +248,7 @@ const qualifyContext: (context: ConceptContext) => void
     = context => {
         Array.from(context.concepts.values())
             .forEach(c => {
-                const { resolved, qualified, incompatible } = qualifyRelations(c.resolved, context.qualifications)
+                const { resolved, qualified, incompatible } = verifyRelationsRecursively(c.resolved, context.qualifications)
                 c.resolved = resolved
                 c.qualified = qualified
                 if (incompatible.length) {

@@ -1,5 +1,5 @@
 import { equal, notEqual, ok } from "assert";
-import { Concept, ConceptRelations, initRelations, QualifyingResult, qualifyRelations } from "./deducer";
+import { Concept, ConceptRelations, ContextVerifyingResult, initRelations, verifyRelationsRecursively } from "./deducer";
 import { analyzeCst, ConceptContext, parse } from "./dsl";
 
 const map_example = `
@@ -86,11 +86,11 @@ describe("map example", () => {
     let ctx: ConceptContext
     let concept: (name: string) => Concept
     let relationsWith: (...names: string[]) => ConceptRelations
-    let assertIncompatible: (res: QualifyingResult) => void
-    let assertNoIncompatible: (res: QualifyingResult) => void
-    let assertIsConcepts: (res: QualifyingResult, ...names: string[]) => void
-    let assertIsntConcepts: (res: QualifyingResult, ...names: string[]) => void
-    let assertNoIsnt: (res: QualifyingResult) => void
+    let assertIncompatible: (res: ContextVerifyingResult) => void
+    let assertNoIncompatible: (res: ContextVerifyingResult) => void
+    let assertIsConcepts: (res: ContextVerifyingResult, ...names: string[]) => void
+    let assertIsntConcepts: (res: ContextVerifyingResult, ...names: string[]) => void
+    let assertNoIsnt: (res: ContextVerifyingResult) => void
     before(() => {
         const parsed = parse(map_example)
         equal(parsed.lexErrors.length, 0)
@@ -115,28 +115,28 @@ describe("map example", () => {
     })
     it("lake is area and geographic", () => {
         const rel = relationsWith("map_item", "lake")
-        const res = qualifyRelations(rel, ctx.qualifications)
+        const res = verifyRelationsRecursively(rel, ctx.qualifications)
         assertNoIncompatible(res)
         assertIsConcepts(res, "geographic", "area")
     })
 
     it("statue is decorative and structural and artificial", () => {
         const rel = relationsWith("map_item", "statue")
-        const res = qualifyRelations(rel, ctx.qualifications)
+        const res = verifyRelationsRecursively(rel, ctx.qualifications)
         assertNoIncompatible(res)
         assertIsConcepts(res, "decorative", "structural", "artificial")
     })
 
     it("site and path is not map_item", () => {
         const rel = relationsWith("site", "path")
-        const res = qualifyRelations(rel, ctx.qualifications)
+        const res = verifyRelationsRecursively(rel, ctx.qualifications)
         assertNoIncompatible(res)
         assertIsntConcepts(res, "map_item")
     })
 
     it("map_item and path and island is incompatible", () => {
         const rel = relationsWith("map_item", "path", "island")
-        const res = qualifyRelations(rel, ctx.qualifications)
+        const res = verifyRelationsRecursively(rel, ctx.qualifications)
         assertIncompatible(res)
     })
 })

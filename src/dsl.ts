@@ -12,28 +12,23 @@ type Prefixes = {
     groupType?: ConceptGroupType,
 }
 
-type NodeDefaults = {
+type NodeProps = {
     mode: ConceptDefaultMode
-    prefixes: Prefixes,
-}
+} & Prefixes
 
 enum CstNodeType {
     Declaration,
     Qualification,
 }
 
-type BuiltCstNode = {
+type FormattedCstNode = {
     type: CstNodeType,
-    mode: ConceptDefaultMode
-    order?: ConceptOrder
-    verb?: ConceptVerb
-    negated?: boolean
+    props: NodeProps
     name?: string
-    groupType?: ConceptGroupType
     list?: string[]
 }
 
-type CstNodeGraph = Map<BuiltCstNode, BuiltCstNode[]>
+type CstNodeGraph = Map<FormattedCstNode, FormattedCstNode[]>
 
 type ConceptStatement = {
     declaration?: ConceptDeclaration
@@ -46,33 +41,33 @@ export type ConceptContext = {
     qualifications: ConceptQualification[]
 }
 
-const applyEscapedMode: (node: EscapedModeNode, defaults: NodeDefaults) => void
-    = ({ children: { Canbe, Isnt } }, defaults) => {
+const applyEscapedMode: (node: EscapedModeNode, target: NodeProps) => void
+    = ({ children: { Canbe, Isnt } }, target) => {
         if (Canbe) {
             assert(Canbe[0])
-            defaults.mode = ConceptDefaultMode.CanbeAnything
+            target.mode = ConceptDefaultMode.CanbeAnything
         } else {
             assert(Isnt && Isnt[0])
-            defaults.mode = ConceptDefaultMode.IsNothing
+            target.mode = ConceptDefaultMode.IsNothing
         }
     }
 
-const applyEscapedPrefix: (node: EscapedPrefixNode, defaults: NodeDefaults) => void
-    = ({ children: { OrderPrefix, VerbPrefix, Not, NameListPrefix } }, { prefixes }) => {
-        prefixes.order = getOrder(OrderPrefix)
-        prefixes.verb = getVerb(VerbPrefix)
-        prefixes.negated = Not !== undefined
-        prefixes.groupType = getGroupType(NameListPrefix)
+const applyEscapedPrefix: (node: EscapedPrefixNode, target: NodeProps) => void
+    = ({ children: { OrderPrefix, VerbPrefix, Not, NameListPrefix } }, target) => {
+        target.order = getOrder(OrderPrefix)
+        target.verb = getVerb(VerbPrefix)
+        target.negated = Not !== undefined
+        target.groupType = getGroupType(NameListPrefix)
     }
 
-const applyEscapedLine: (node: EscapedLineNode, defaults: NodeDefaults) => void
-    = ({ children: { EscapedMode, EscapedPrefix } }, defaults) => {
+const applyEscapedLine: (node: EscapedLineNode, target: NodeProps) => void
+    = ({ children: { EscapedMode, EscapedPrefix } }, target) => {
         if (EscapedMode) {
             assert(EscapedMode[0])
-            applyEscapedMode(EscapedMode[0], defaults)
+            applyEscapedMode(EscapedMode[0], target)
         } else {
             assert(EscapedPrefix && EscapedPrefix[0])
-            applyEscapedPrefix(EscapedPrefix[0], defaults)
+            applyEscapedPrefix(EscapedPrefix[0], target)
         }
     }
 
@@ -106,15 +101,15 @@ const getGroupType: (nodes?: NameListPrefixNode[]) => ConceptGroupType | undefin
         }
     }
 
-const lineToCstNode: (node: NormalLineNode, defaults: NodeDefaults) => BuiltCstNode
+const lineToCstNode: (node: NormalLineNode, defaults: NodeProps) => FormattedCstNode
     = ({ children: { OrderPrefix, VerbPrefix, Not, Name, NameList, Sublines } }, defaults) => {
         const mode = defaults.mode
         let order = getOrder(OrderPrefix)
-        if (!order) order = defaults.prefixes.order
+        if (!order) order = defaults.order
         let verb = getVerb(VerbPrefix)
-        if (!verb) verb = defaults.prefixes.verb
+        if (!verb) verb = defaults.verb
         let negated = Not !== undefined
-        if (!Not && defaults.prefixes.negated !== undefined) negated = defaults.prefixes.negated
+        if (!Not && defaults.negated !== undefined) negated = defaults.negated
         let type = CstNodeType.Declaration
         if (order === ConceptOrder.Cascading && !Sublines || order === ConceptOrder.Reverse && Sublines)
             type = CstNodeType.Qualification
@@ -130,12 +125,12 @@ const lineToCstNode: (node: NormalLineNode, defaults: NodeDefaults) => BuiltCstN
             assert(NameList[0])
             list = NameList[0].children.Name?.map(token => token.image)
             groupType = getGroupType(NameList[0].children.NameListPrefix)
-            if (!groupType) groupType = defaults.prefixes.groupType
+            if (!groupType) groupType = defaults.groupType
         }
-        return { type, mode, order, verb, negated, name, list, groupType }
+        return { type, props: { mode, order, verb, negated, groupType }, name, list }
     }
 
-const buildNodeGraph: (node: NormalLineNode, defaults: NodeDefaults, built?: BuiltCstNode) => CstNodeGraph
+const buildNodeGraph: (node: NormalLineNode, defaults: NodeProps, built?: FormattedCstNode) => CstNodeGraph
     = (node, defaults, built) => {
         const { Sublines } = node.children
         const res: CstNodeGraph = new Map()
@@ -144,7 +139,7 @@ const buildNodeGraph: (node: NormalLineNode, defaults: NodeDefaults, built?: Bui
             assert(Sublines[0])
             Sublines[0].children.NormalLine?.forEach(subline => {
                 const subCstNode = lineToCstNode(subline, defaults)
-                if (CstNode.order === ConceptOrder.Cascading) mapPushOrInit(res, CstNode, subCstNode)
+                if (CstNode.props.order === ConceptOrder.Cascading) mapPushOrInit(res, CstNode, subCstNode)
                 else mapPushOrInit(res, subCstNode, CstNode)
                 appendMap(res, buildNodeGraph(subline, defaults, subCstNode))
             })
@@ -153,7 +148,7 @@ const buildNodeGraph: (node: NormalLineNode, defaults: NodeDefaults, built?: Bui
         return res
     }
 
-const buildCompleteNodeGraph: (node: LinesNode, defaults: NodeDefaults) => CstNodeGraph
+const buildCompleteNodeGraph: (node: LinesNode, defaults: NodeProps) => CstNodeGraph
     = (node, defaults) => {
         const Line = node.children.Line
         const res: CstNodeGraph = new Map()
@@ -169,7 +164,7 @@ const buildCompleteNodeGraph: (node: LinesNode, defaults: NodeDefaults) => CstNo
         return res
     }
 
-const conceptualizeNode: (cn: BuiltCstNode, doneConcepts: Map<string, Concept>) => ConceptStatement
+const conceptualizeNode: (cn: FormattedCstNode, doneConcepts: Map<string, Concept>) => ConceptStatement
     = (cn, doneConcepts) => {
         let declaration: ConceptDeclaration | undefined, qualification: ConceptQualification | undefined
         const initQualification = (negated: boolean) => ({
@@ -190,21 +185,21 @@ const conceptualizeNode: (cn: BuiltCstNode, doneConcepts: Map<string, Concept>) 
         const conceptGetOrInit = (name: string, mode: ConceptDefaultMode) =>
             mapGetOrInit(doneConcepts, name, () => initConcept(name, mode))
         if (cn.type === CstNodeType.Declaration) {
-            assert(cn.name && cn.verb)
-            const verb = cn.verb
-            const concept = conceptGetOrInit(cn.name, cn.mode)
+            assert(cn.name && cn.props.verb)
+            const verb = cn.props.verb
+            const concept = conceptGetOrInit(cn.name, cn.props.mode)
             declaration = { verb, concept }
         } else {
-            assert(cn.negated)
-            const negated = cn.negated
+            assert(cn.props.negated)
+            const negated = cn.props.negated
             if (cn.name) {
                 qualification = initQualification(negated)
-                qualification.concept = conceptGetOrInit(cn.name, cn.mode)
+                qualification.concept = conceptGetOrInit(cn.name, cn.props.mode)
             } else {
                 assert(cn.list)
-                assert(cn.groupType)
-                const type = cn.groupType
-                const concepts = cn.list.map(n => conceptGetOrInit(n, cn.mode))
+                assert(cn.props.groupType)
+                const type = cn.props.groupType
+                const concepts = cn.list.map(n => conceptGetOrInit(n, cn.props.mode))
                 qualification = initQualification(negated)
                 qualification.group = { type, concepts }
             }
@@ -238,8 +233,8 @@ const buildContext: (graph: CstNodeGraph) => ConceptContext
     = graph => {
         const conceptGraph: StatementGraph = new Map()
         const concepts = new Map<string, Concept>()
-        const statements = new Map<BuiltCstNode, ConceptStatement>()
-        const statementGetOrInit = (node: BuiltCstNode) =>
+        const statements = new Map<FormattedCstNode, ConceptStatement>()
+        const statementGetOrInit = (node: FormattedCstNode) =>
             mapGetOrInit(statements, node, () => conceptualizeNode(node, concepts))
         Array.from(graph.entries()).forEach(([k, arr]) =>
             conceptGraph.set(statementGetOrInit(k).declaration!, arr.map(statementGetOrInit)))
@@ -267,9 +262,8 @@ const qualifyContext: (context: ConceptContext) => void
 export const analyzeCst: (root: RootNode) => ConceptContext
     = ({ children: { EscapedMode, Lines } }) => {
         if (!EscapedMode || !Lines) return { concepts: new Map(), qualifications: [] }
-        const defaults: NodeDefaults = {
+        const defaults: NodeProps = {
             mode: ConceptDefaultMode.CanbeAnything,
-            prefixes: {},
         }
         assert(EscapedMode[0] && Lines[0])
         applyEscapedMode(EscapedMode[0], defaults)

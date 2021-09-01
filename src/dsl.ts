@@ -1,8 +1,8 @@
-import { CstNode, ILexingError, IRecognitionException } from "chevrotain"
-import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, Concept, ConceptRelations, ConceptDeclaration, ConceptGroup, ConceptQualification, resolveDeclarations, initRelations, verifyRelationsRecursively } from "./deducer"
+import { CstNode, ILexingError, IRecognitionException, IToken } from "chevrotain"
+import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, Concept, ConceptRelations, ConceptDeclaration, ConceptGroup, ConceptQualification, resolveDeclarations, initRelations, verifyRelationsRecursively, initConcept, initQualification } from "./deducer"
 import { lexer, tokens } from "./lexer"
 import { CorrelationParser } from "./parser"
-import { EscapedModeNode, EscapedPrefixNode, EscapedLineNode, OrderPrefixNode, VerbPrefixNode, NameListPrefixNode, NormalLineNode, LinesNode, RootNode } from "./typing"
+import { EscapedModeNode, EscapedPrefixNode, EscapedLineNode, OrderPrefixNode, VerbPrefixNode, NameListPrefixNode, NormalLineNode, LinesNode, RootNode, SublinesNode, NameListNode } from "./typing"
 import { mapPushOrInit, appendMap, mapGetOrInit, assert } from "./utils"
 
 type Prefixes = {
@@ -51,15 +51,13 @@ const applyEscapedMode: (node: EscapedModeNode, target: NodeProps) => void
             target.mode = ConceptDefaultMode.IsNothing
         }
     }
-
 const applyEscapedPrefix: (node: EscapedPrefixNode, target: NodeProps) => void
     = ({ children: { OrderPrefix, VerbPrefix, Not, NameListPrefix } }, target) => {
-        target.order = getOrder(OrderPrefix)
-        target.verb = getVerb(VerbPrefix)
+        target.order = getOrder(target, OrderPrefix)
+        target.verb = getVerb(target, VerbPrefix)
         target.negated = Not !== undefined
-        target.groupType = getGroupType(NameListPrefix)
+        target.groupType = getGroupType(target, NameListPrefix)
     }
-
 const applyEscapedLine: (node: EscapedLineNode, target: NodeProps) => void
     = ({ children: { EscapedMode, EscapedPrefix } }, target) => {
         if (EscapedMode) {
@@ -71,17 +69,18 @@ const applyEscapedLine: (node: EscapedLineNode, target: NodeProps) => void
         }
     }
 
-const getOrder: (nodes?: OrderPrefixNode[]) => ConceptOrder | undefined
-    = nodes => {
+const getOrder: (defaults: NodeProps, nodes?: OrderPrefixNode[]) => ConceptOrder | undefined
+    = (defaults, nodes) => {
         if (nodes) {
             assert(nodes[0])
             const { Cascading, Reverse } = nodes[0].children
             if (Cascading) return ConceptOrder.Cascading
             if (Reverse) return ConceptOrder.Reverse
         }
+        return defaults.order
     }
-const getVerb: (nodes?: VerbPrefixNode[]) => ConceptVerb | undefined
-    = nodes => {
+const getVerb: (defaults: NodeProps, nodes?: VerbPrefixNode[]) => ConceptVerb | undefined
+    = (defaults, nodes) => {
         if (nodes) {
             assert(nodes[0])
             const { Is, Isnt, Canbe } = nodes[0].children
@@ -89,9 +88,15 @@ const getVerb: (nodes?: VerbPrefixNode[]) => ConceptVerb | undefined
             if (Isnt) return ConceptVerb.Isnt
             if (Canbe) return ConceptVerb.Canbe
         }
+        return defaults.verb
     }
-const getGroupType: (nodes?: NameListPrefixNode[]) => ConceptGroupType | undefined
-    = nodes => {
+const getNegated: (defaults: NodeProps, not?: IToken[]) => boolean | undefined
+    = (defaults, not) => {
+        if (not !== undefined) return true
+        return defaults.negated
+    }
+const getGroupType: (defaults: NodeProps, nodes?: NameListPrefixNode[]) => ConceptGroupType | undefined
+    = (defaults, nodes) => {
         if (nodes) {
             assert(nodes[0])
             const { Or, And, Oneof } = nodes[0].children
@@ -99,33 +104,39 @@ const getGroupType: (nodes?: NameListPrefixNode[]) => ConceptGroupType | undefin
             if (And) return ConceptGroupType.And
             if (Oneof) return ConceptGroupType.Oneof
         }
+        return defaults.groupType
     }
+const getNodeType: (order?: ConceptOrder, sublines?: SublinesNode[]) => CstNodeType
+    = (order, sublines) =>
+        (order === ConceptOrder.Cascading && !sublines || order === ConceptOrder.Reverse && sublines) ?
+            CstNodeType.Qualification :
+            CstNodeType.Declaration
+const getName: (name?: IToken[]) => string | undefined
+    = name => {
+        if (name) {
+            assert(name[0])
+            return name[0].image
+        }
+    }
+const getNameList: (name?: IToken[]) => string[] | undefined
+    = name => name?.map(token => token.image)
 
 const lineToCstNode: (node: NormalLineNode, defaults: NodeProps) => FormattedCstNode
     = ({ children: { OrderPrefix, VerbPrefix, Not, Name, NameList, Sublines } }, defaults) => {
         const mode = defaults.mode
-        let order = getOrder(OrderPrefix)
-        if (!order) order = defaults.order
-        let verb = getVerb(VerbPrefix)
-        if (!verb) verb = defaults.verb
-        let negated = Not !== undefined
-        if (!Not && defaults.negated !== undefined) negated = defaults.negated
-        let type = CstNodeType.Declaration
-        if (order === ConceptOrder.Cascading && !Sublines || order === ConceptOrder.Reverse && Sublines)
-            type = CstNodeType.Qualification
-        let name
-        if (Name) {
-            assert(Name[0])
-            name = Name[0].image
-        }
+        const order = getOrder(defaults, OrderPrefix)
+        const verb = getVerb(defaults, VerbPrefix)
+        const negated = getNegated(defaults, Not)
+        const type = getNodeType(order, Sublines)
+        const name = getName(Name)
         let list: string[] | undefined, groupType: ConceptGroupType | undefined
         if (NameList) {
             if (type === CstNodeType.Declaration)
                 throw new Error("Cannot have list as declaration node")
             assert(NameList[0])
-            list = NameList[0].children.Name?.map(token => token.image)
-            groupType = getGroupType(NameList[0].children.NameListPrefix)
-            if (!groupType) groupType = defaults.groupType
+            const { Name, NameListPrefix } = NameList[0].children
+            list = getNameList(Name)
+            groupType = getGroupType(defaults, NameListPrefix)
         }
         return { type, props: { mode, order, verb, negated, groupType }, name, list }
     }
@@ -144,7 +155,6 @@ const buildNodeGraph: (node: NormalLineNode, defaults: NodeProps, built?: Format
                 appendMap(res, buildNodeGraph(subline, defaults, subCstNode))
             })
         }
-
         return res
     }
 
@@ -167,21 +177,6 @@ const buildCompleteNodeGraph: (node: LinesNode, defaults: NodeProps) => CstNodeG
 const conceptualizeNode: (cn: FormattedCstNode, doneConcepts: Map<string, Concept>) => ConceptStatement
     = (cn, doneConcepts) => {
         let declaration: ConceptDeclaration | undefined, qualification: ConceptQualification | undefined
-        const initQualification = (negated: boolean) => ({
-            negated,
-            declared: [],
-            resolved: initRelations(),
-        })
-        const initConcept = (name: string, mode: ConceptDefaultMode) => {
-            const c: Concept = {
-                name,
-                defaultMode: mode,
-                resolved: initRelations(),
-                qualified: [],
-            }
-            c.resolved.is.add(c)
-            return c
-        }
         const conceptGetOrInit = (name: string, mode: ConceptDefaultMode) =>
             mapGetOrInit(doneConcepts, name, () => initConcept(name, mode))
         if (cn.type === CstNodeType.Declaration) {
@@ -191,21 +186,17 @@ const conceptualizeNode: (cn: FormattedCstNode, doneConcepts: Map<string, Concep
             declaration = { verb, concept }
         } else {
             assert(cn.props.negated)
-            const negated = cn.props.negated
+            qualification = initQualification(cn.props.negated)
             if (cn.name) {
-                qualification = initQualification(negated)
                 qualification.concept = conceptGetOrInit(cn.name, cn.props.mode)
             } else {
-                assert(cn.list)
-                assert(cn.props.groupType)
+                assert(cn.list && cn.props.groupType)
                 const type = cn.props.groupType
                 const concepts = cn.list.map(n => conceptGetOrInit(n, cn.props.mode))
-                qualification = initQualification(negated)
                 qualification.group = { type, concepts }
             }
         }
-        if (declaration) return { declaration }
-        return { qualification }
+        return declaration ? { declaration } : { qualification }
     }
 
 const passDownDeclaration: (graph: StatementGraph) => Set<ConceptQualification>

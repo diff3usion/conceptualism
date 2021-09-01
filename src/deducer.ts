@@ -70,6 +70,22 @@ export const initAssertions = () => ({
     isnt: new Set<Concept>(),
 })
 
+export const initQualification = (negated: boolean) => ({
+    negated,
+    declared: [],
+    resolved: initRelations(),
+})
+export const initConcept = (name: string, mode: ConceptDefaultMode) => {
+    const c: Concept = {
+        name,
+        defaultMode: mode,
+        resolved: initRelations(),
+        qualified: [],
+    }
+    c.resolved.is.add(c)
+    return c
+}
+
 const checkRelationsInconsistency: (relations: ConceptRelations) => Set<Concept>
     = ({ is, isnt, canbe }) => intersect(is, isnt)
 

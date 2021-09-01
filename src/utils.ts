@@ -5,7 +5,7 @@ export function assert(value: unknown, msg?: string): asserts value {
 
 export const unionTwoSets
     = <T>(a: Set<T>, b: Set<T>) =>
-        Array(...a, ...b).reduce((res, v) => res.add(v), new Set<T>())
+        new Set(Array(...a, ...b))
 
 export const union
     = <T>(...sets: Set<T>[]) =>
@@ -28,15 +28,11 @@ export const subtract
         sets.slice(1).reduce((res, set) => subtractTwoSets(res, set), sets[0])
 
 
-export function appendSet<T>(set0: Set<T>, set1: Array<T>): Set<T>
+export function appendSet<T>(set0: Set<T>, array: Array<T>): Set<T>
 export function appendSet<T>(set0: Set<T>, set1: Set<T>): Set<T>
-export function appendSet<T>(set0: Set<T>, set1: any): Set<T> {
-    return set1.forEach((v: T) => set0.add(v))
+export function appendSet<T>(set0: Set<T>, collection: any): Set<T> {
+    return collection.forEach((v: T) => set0.add(v))
 }
-
-export const mergeSets
-    = <T>(set0: Set<T>, set1: Set<T>) =>
-        new Set<T>(Array(...set0, ...set1))
 
 export const arrayFilterInSet = <T>(arr: T[], set: Set<T>) =>
     arr.filter(c => set.has(c))

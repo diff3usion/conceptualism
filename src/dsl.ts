@@ -1,5 +1,5 @@
 import { CstNode, ILexingError, IRecognitionException, IToken } from "chevrotain"
-import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, Concept, ConceptRelations, ConceptDeclaration, ConceptGroup, ConceptQualification, resolveDeclarations, initRelations, verifyRelationsRecursively, initConcept, initQualification } from "./deducer"
+import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, Concept, ConceptRelations, ConceptDeclaration, ConceptGroup, ConceptQualification, verifyRelationsInContext, initConcept, initQualification, appendQualificationDeclarations } from "./deducer"
 import { lexer, tokens } from "./lexer"
 import { CorrelationParser } from "./parser"
 import { EscapedModeNode, EscapedPrefixNode, EscapedLineNode, OrderPrefixNode, VerbPrefixNode, NameListPrefixNode, NormalLineNode, LinesNode, RootNode, SublinesNode, NameListNode } from "./typing"
@@ -174,26 +174,27 @@ const buildCompleteNodeGraph: (node: LinesNode, defaults: NodeProps) => CstNodeG
         return res
     }
 
-const conceptualizeNode: (cn: FormattedCstNode, doneConcepts: Map<string, Concept>) => ConceptStatement
-    = (cn, doneConcepts) => {
+const conceptualizeNode: (fcn: FormattedCstNode, doneConcepts: Map<string, Concept>) => ConceptStatement
+    = (fcn, doneConcepts) => {
         let declaration: ConceptDeclaration | undefined, qualification: ConceptQualification | undefined
         const conceptGetOrInit = (name: string, mode: ConceptDefaultMode) =>
             mapGetOrInit(doneConcepts, name, () => initConcept(name, mode))
-        if (cn.type === CstNodeType.Declaration) {
-            assert(cn.name && cn.props.verb)
-            const verb = cn.props.verb
-            const concept = conceptGetOrInit(cn.name, cn.props.mode)
+        if (fcn.type === CstNodeType.Declaration) {
+            assert(fcn.name && fcn.props.verb)
+            const verb = fcn.props.verb
+            const concept = conceptGetOrInit(fcn.name, fcn.props.mode)
             declaration = { verb, concept }
         } else {
-            assert(cn.props.negated)
-            qualification = initQualification(cn.props.negated)
-            if (cn.name) {
-                qualification.concept = conceptGetOrInit(cn.name, cn.props.mode)
+            assert(fcn.props.negated)
+            qualification = initQualification()
+            qualification.negated = fcn.props.negated
+            if (fcn.name) {
+                qualification.matcher.concept = conceptGetOrInit(fcn.name, fcn.props.mode)
             } else {
-                assert(cn.list && cn.props.groupType)
-                const type = cn.props.groupType
-                const concepts = cn.list.map(n => conceptGetOrInit(n, cn.props.mode))
-                qualification.group = { type, concepts }
+                assert(fcn.list && fcn.props.groupType)
+                const type = fcn.props.groupType
+                const concepts = fcn.list.map(n => conceptGetOrInit(n, fcn.props.mode))
+                qualification.matcher.group = { type, concepts }
             }
         }
         return declaration ? { declaration } : { qualification }
@@ -211,7 +212,7 @@ const passDownDeclaration: (graph: StatementGraph) => Set<ConceptQualification>
                     visitDeclaration(declaration, [...stack, declaration])
                 } else {
                     assert(qualification)
-                    qualification.declared = stack
+                    appendQualificationDeclarations(qualification, stack)
                     res.add(qualification)
                 }
             })
@@ -231,7 +232,6 @@ const buildContext: (graph: CstNodeGraph) => ConceptContext
             conceptGraph.set(statementGetOrInit(k).declaration!, arr.map(statementGetOrInit)))
 
         const qualifications = Array.from(passDownDeclaration(conceptGraph))
-        qualifications.forEach(q => resolveDeclarations(q))
         return { concepts, qualifications }
     }
 
@@ -239,7 +239,7 @@ const qualifyContext: (context: ConceptContext) => void
     = context => {
         Array.from(context.concepts.values())
             .forEach(c => {
-                const { resolved, qualified, incompatible } = verifyRelationsRecursively(c.resolved, context.qualifications)
+                const { resolved, qualified, incompatible } = verifyRelationsInContext(c.resolved, context.qualifications)
                 c.resolved = resolved
                 c.qualified = qualified
                 if (incompatible.length) {
@@ -275,13 +275,16 @@ export const stringifyConcept: (ctx: ConceptContext, c: Concept, showResolved?: 
         })`
 
 export const stringifyDeclaration: (d: ConceptDeclaration) => string
-    = d => `Declaration(${d.verb}, ${d.concept.name}`
+    = ({ verb, concept }) =>
+        `Declaration(${verb}, ${concept.name}`
 
 export const stringifyGroup: (g: ConceptGroup) => string
-    = g => `Group(${g.type}, ${g.concepts.map(c => c.name).join(', ')}`
+    = ({ type, concepts }) =>
+        `Group(${type}, ${concepts.map(c => c.name).join(', ')}`
 
 export const stringifyQualification: (q: ConceptQualification) => string
-    = q => `Qualification(${q.negated}, ${q.concept ? q.concept.name : stringifyGroup(q.group!)}, ${q.declared.map(stringifyDeclaration)}, ${q.resolved ? stringifyRelations(q.resolved) : ''})`
+    = ({ negated, matcher: { concept, group }, declared, resolved }) =>
+        `Qualification(${negated}, ${concept ? concept.name : stringifyGroup(group!)}, ${declared.map(stringifyDeclaration)}, ${resolved ? stringifyRelations(resolved) : ''})`
 
 export const stringifyContext: (ctx: ConceptContext) => any
     = ctx => ({

@@ -49,6 +49,10 @@ export const arrayIntersectSetCount = <T>(arr: T[], set: Set<T>) =>
 export const isArrayInSet = <T>(arr: T[], set: Set<T>) =>
     arr.every(c => set.has(c))
 
+export const isTwoSetsEqual
+    = <T>(a: Set<T>, b: Set<T>) =>
+        a.size === b.size && isArrayInSet(Array(...a), b)
+
 export const mapGetOrInit: <K, V>(map: Map<K, V>, key: K, val: () => V) => V
     = (map, key, val) =>
         map.has(key) ? map.get(key)! : map.set(key, val()).get(key)!

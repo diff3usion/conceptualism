@@ -37,13 +37,18 @@ export type ConceptAssertions = {
 export type Concept = {
     name: string
     defaultMode: ConceptDefaultMode
-    resolved: ConceptRelations
     qualified: ConceptQualification[]
+    resolved: ConceptRelations
 }
 
 export type ConceptGroup = {
     type: ConceptGroupType
     concepts: Concept[]
+}
+
+export type ConceptMatcher = {
+    concept?: Concept,
+    group?: ConceptGroup,
 }
 
 export type ConceptDeclaration = {
@@ -52,152 +57,53 @@ export type ConceptDeclaration = {
 }
 
 export type ConceptQualification = {
-    negated: boolean,
-    concept?: Concept
-    group?: ConceptGroup
+    negated: boolean
+    matcher: ConceptMatcher
     declared: ConceptDeclaration[]
     resolved: ConceptRelations
 }
 
-export const initRelations = () => ({
-    is: new Set<Concept>(),
-    isnt: new Set<Concept>(),
-    canbe: new Set<Concept>(),
-})
-
-export const initAssertions = () => ({
-    is: new Set<Concept>(),
-    isnt: new Set<Concept>(),
-})
-
-export const initQualification = (negated: boolean) => ({
-    negated,
-    declared: [],
-    resolved: initRelations(),
-})
-export const initConcept = (name: string, mode: ConceptDefaultMode) => {
-    const c: Concept = {
-        name,
-        defaultMode: mode,
-        resolved: initRelations(),
-        qualified: [],
-    }
-    c.resolved.is.add(c)
-    return c
-}
-
-const checkRelationsInconsistency: (relations: ConceptRelations) => Set<Concept>
-    = ({ is, isnt, canbe }) => intersect(is, isnt)
-
-export class ConsistencyResult {
-    constructor(
-        readonly inconsistency: ConceptAssertions,
-    ) { }
-    get result(): boolean {
-        return !this.inconsistency.is.size && !this.inconsistency.isnt.size
-    }
-}
-
-export class VerifyingResult {
-    constructor(
-        readonly missing: Set<Concept>,
-        readonly redundant: Set<Concept>,
-    ) { }
-    get result(): boolean {
-        return !this.missing.size && !this.redundant.size
-    }
-}
-
-
-export const checkTwoRelationsCompatibility: (rel0: ConceptRelations, rel1: ConceptRelations) => ConsistencyResult
-    = ({ is, isnt }, { is: _is, isnt: _isnt }) => new ConsistencyResult({
-        is: intersect(is, _isnt),
-        isnt: intersect(isnt, _is),
+export const initRelations: () => ConceptRelations
+    = () => ({
+        is: new Set<Concept>(),
+        isnt: new Set<Concept>(),
+        canbe: new Set<Concept>(),
     })
 
-const checkQualificationConsistency: (qualification: ConceptQualification) => ConsistencyResult
-    = ({ negated, concept, group, resolved }) => {
-        const { is, isnt } = resolved!
-        let result = true
-        const inconsistency = initAssertions()
-        if (concept) {
-            result = !(negated ? isnt : is).has(concept)
-            if (!result) (negated ? inconsistency.isnt : inconsistency.is).add(concept)
-        } else {
-            assert(group)
-            const { type, concepts } = group
-            if (negated) {
-                if (type === ConceptGroupType.And) {
-                    result = !isArrayInSet(concepts, is)
-                    if (!result) appendSet(inconsistency.is, concepts)
-                } else if (type === ConceptGroupType.Or) {
-                    result = !doesArrayIntersectSet(concepts, is)
-                    if (!result) appendSet(inconsistency.is, arrayFilterInSet(concepts, is))
-                } else if (type === ConceptGroupType.Oneof) {
-                    result = arrayIntersectSetCount(concepts, is) !== 1 ||
-                        arrayIntersectSetCount(concepts, isnt) !== concepts.length - 1
-                    if (!result) {
-                        appendSet(inconsistency.is, arrayFilterInSet(concepts, is))
-                        appendSet(inconsistency.isnt, arrayFilterInSet(concepts, isnt))
-                    }
-                }
-            } else {
-                if (type === ConceptGroupType.And) {
-                    result = !doesArrayIntersectSet(concepts, isnt)
-                    if (!result) appendSet(inconsistency.is, arrayFilterInSet(concepts, isnt))
-                } else if (type === ConceptGroupType.Or) {
-                    result = !isArrayInSet(concepts, isnt)
-                    if (!result) appendSet(inconsistency.isnt, concepts)
-                } else if (type === ConceptGroupType.Oneof) {
-                    result = arrayIntersectSetCount(concepts, is) <= 1
-                    if (!result) appendSet(inconsistency.is, arrayFilterInSet(concepts, is))
-                }
-            }
+export const initAssertions: () => ConceptAssertions
+    = () => ({
+        is: new Set<Concept>(),
+        isnt: new Set<Concept>(),
+    })
+
+export const initQualification: () => ConceptQualification
+    = () => ({
+        negated: false,
+        matcher: {},
+        declared: [],
+        resolved: initRelations()
+    })
+
+export const initConcept: (name: string, mode: ConceptDefaultMode) => Concept
+    = (name, mode) => {
+        const c: Concept = {
+            name,
+            defaultMode: mode,
+            resolved: initRelations(),
+            qualified: [],
         }
-        return new ConsistencyResult(inconsistency)
+        c.resolved.is.add(c)
+        return c
     }
 
-export const verifyRelationsOnce: (relations: ConceptRelations, qualification: ConceptQualification) => VerifyingResult
-= ({ is }, { negated, concept, group }) => {
-    const missing = new Set<Concept>()
-    const redundant = new Set<Concept>()
-    if (concept) {
-        if (negated === is.has(concept)) 
-            (negated ? redundant : missing).add(concept)
-    } else {
-        assert(group)
-        const { type, concepts } = group
-        if (type === ConceptGroupType.And) {
-            if (negated === isArrayInSet(concepts, is)) {
-                if (negated) {
-                    appendSet(redundant, concepts)
-                } else {
-                    appendSet(missing, arrayFilterNotInSet(concepts, is))
-                }
-            }
-        } else if (type === ConceptGroupType.Or) {
-            if (negated === doesArrayIntersectSet(concepts, is)) {
-                if (negated) {
-                    appendSet(redundant, arrayFilterInSet(concepts, is))
-                } else {
-                    appendSet(missing, concepts)
-                }
-            }
-        } else if (type === ConceptGroupType.Oneof) {
-            const intersects = new Set(arrayFilterInSet(concepts, is))
-            if (negated === (intersects.size === 1)) {
-                if (negated) {
-                    appendSet(redundant, intersects)
-                    appendSet(missing, arrayFilterNotInSet(concepts, intersects))
-                } else {
-                    if (intersects.size < 1) appendSet(missing, concepts)
-                    else appendSet(redundant, arrayFilterInSet(concepts, is))
-                }
-            }
+const pickRelationsSet: (rel: ConceptRelations, verb: ConceptVerb) => Set<Concept>
+    = ({ is, isnt, canbe }, verb) => {
+        switch (verb) {
+            case ConceptVerb.Is: return is
+            case ConceptVerb.Isnt: return isnt
+            case ConceptVerb.Canbe: return canbe
         }
     }
-    return new VerifyingResult(missing, redundant)
-}
 
 const cloneRelations: (rel: ConceptRelations) => ConceptRelations
     = rel => ({
@@ -216,23 +122,118 @@ const appendTwoRelations: (rel0: ConceptRelations, rel1: ConceptRelations) => vo
 const appendRelations: (rel0: ConceptRelations, ...rels: ConceptRelations[]) => void
     = (rel0, ...rels) => rels.forEach(r => appendTwoRelations(rel0, r))
 
-type ResolvingResult = {
-    relationsInconsistency: Set<Concept>
-    qualificationConsistency: ConsistencyResult
+export const appendQualificationDeclarations: (qualification: ConceptQualification, declarations: ConceptDeclaration[]) => void
+    = (q, d) => {
+        q.declared.push(...d)
+        q.declared.forEach(d => pickRelationsSet(q.resolved, d.verb).add(d.concept))
+    }
+
+export type ConsistencyResult = {
+    inconsistency: ConceptAssertions
+    result: boolean
 }
-export const resolveDeclarations: (qualification: ConceptQualification) => ResolvingResult
-    = qualification => {
-        const relations = initRelations()
-        const { is, isnt, canbe } = relations
-        qualification.declared.forEach(d => {
-            if (d.verb === ConceptVerb.Is) is.add(d.concept)
-            else if (d.verb === ConceptVerb.Isnt) isnt.add(d.concept)
-            else if (d.verb === ConceptVerb.Canbe) canbe.add(d.concept)
+const initConsistencyResult: (inconsistency: ConceptAssertions) => ConsistencyResult =
+    inconsistency => ({
+        inconsistency,
+        result: !inconsistency.is.size && !inconsistency.isnt.size,
+    })
+export const areTwoRelationsCompatible: (rel0: ConceptRelations, rel1: ConceptRelations) => ConsistencyResult
+    = ({ is, isnt }, { is: _is, isnt: _isnt }) =>
+        initConsistencyResult({
+            is: intersect(is, _isnt),
+            isnt: intersect(isnt, _is),
         })
-        qualification.resolved = relations
-        const relationsInconsistency = checkRelationsInconsistency(relations)
-        const qualificationConsistency = checkQualificationConsistency(qualification)
-        return { relationsInconsistency, qualificationConsistency }
+export const isQualificationConsistent: (q: ConceptQualification) => ConsistencyResult
+    = ({ negated, matcher: { concept, group }, resolved }) => {
+        const inconsistency = areTwoRelationsCompatible(resolved, resolved).inconsistency
+        const { is, isnt } = resolved
+
+        if (concept) {
+            if ((negated ? isnt : is).has(concept))
+                (negated ? inconsistency.isnt : inconsistency.is).add(concept)
+        } else {
+            assert(group)
+            const { type, concepts } = group
+            if (negated) {
+                if (type === ConceptGroupType.And) {
+                    if (isArrayInSet(concepts, is))
+                        appendSet(inconsistency.is, concepts)
+                } else if (type === ConceptGroupType.Or) {
+                    if (doesArrayIntersectSet(concepts, is))
+                        appendSet(inconsistency.is, arrayFilterInSet(concepts, is))
+                } else if (type === ConceptGroupType.Oneof) {
+                    if (arrayIntersectSetCount(concepts, is) === 1 &&
+                        arrayIntersectSetCount(concepts, isnt) === concepts.length - 1) {
+                        appendSet(inconsistency.is, arrayFilterInSet(concepts, is))
+                        appendSet(inconsistency.isnt, arrayFilterInSet(concepts, isnt))
+                    }
+                }
+            } else {
+                if (type === ConceptGroupType.And) {
+                    if (doesArrayIntersectSet(concepts, isnt))
+                        appendSet(inconsistency.is, arrayFilterInSet(concepts, isnt))
+                } else if (type === ConceptGroupType.Or) {
+                    if (isArrayInSet(concepts, isnt))
+                        appendSet(inconsistency.isnt, concepts)
+                } else if (type === ConceptGroupType.Oneof) {
+                    if (arrayIntersectSetCount(concepts, is) > 1)
+                        appendSet(inconsistency.is, arrayFilterInSet(concepts, is))
+                }
+            }
+        }
+        return initConsistencyResult(inconsistency)
+    }
+
+export type VerifyingResult = {
+    missing: Set<Concept>
+    redundant: Set<Concept>
+    result: boolean
+}
+const initVerifyingResult: (missing: Set<Concept>, redundant: Set<Concept>) => VerifyingResult =
+    (missing, redundant) => ({
+        missing,
+        redundant,
+        result: !missing.size && !redundant.size
+    })
+export const verifyRelations: (relations: ConceptRelations, qualification: ConceptQualification) => VerifyingResult
+    = ({ is }, { negated, matcher: { concept, group } }) => {
+        const missing = new Set<Concept>(), redundant = new Set<Concept>()
+        if (concept) {
+            if (negated === is.has(concept))
+                (negated ? redundant : missing).add(concept)
+        } else {
+            assert(group)
+            const { type, concepts } = group
+            if (type === ConceptGroupType.And) {
+                if (negated === isArrayInSet(concepts, is)) {
+                    if (negated) {
+                        appendSet(redundant, concepts)
+                    } else {
+                        appendSet(missing, arrayFilterNotInSet(concepts, is))
+                    }
+                }
+            } else if (type === ConceptGroupType.Or) {
+                if (negated === doesArrayIntersectSet(concepts, is)) {
+                    if (negated) {
+                        appendSet(redundant, arrayFilterInSet(concepts, is))
+                    } else {
+                        appendSet(missing, concepts)
+                    }
+                }
+            } else if (type === ConceptGroupType.Oneof) {
+                const intersects = new Set(arrayFilterInSet(concepts, is))
+                if (negated === (intersects.size === 1)) {
+                    if (negated) {
+                        appendSet(redundant, intersects)
+                        appendSet(missing, arrayFilterNotInSet(concepts, intersects))
+                    } else {
+                        if (intersects.size < 1) appendSet(missing, concepts)
+                        else appendSet(redundant, arrayFilterInSet(concepts, is))
+                    }
+                }
+            }
+        }
+        return initVerifyingResult(missing, redundant)
     }
 
 export type ContextVerifyingResult = {
@@ -241,7 +242,7 @@ export type ContextVerifyingResult = {
     unqualified: [ConceptQualification, VerifyingResult][],
     incompatible: [ConceptQualification, ConsistencyResult][],
 }
-export const verifyRelationsRecursively: (relations: ConceptRelations, qualifications: ConceptQualification[]) => ContextVerifyingResult
+export const verifyRelationsInContext: (relations: ConceptRelations, qualifications: ConceptQualification[]) => ContextVerifyingResult
     = (relations, qualifications) => {
         let resolved = cloneRelations(relations)
         const maybeQualified: Set<ConceptQualification> = new Set()
@@ -251,47 +252,46 @@ export const verifyRelationsRecursively: (relations: ConceptRelations, qualifica
             resolved = cloneRelations(relations)
             appendRelations(resolved, ...Array.from(maybeQualified).map(q => q.resolved))
         }
+        const findNolongerQualified: () => ConceptQualification[]
+            = () => Array.from(maybeQualified).filter(q => {
+                const qres = verifyRelations(resolved, q)
+                if (!qres.result) unqualifiedResults.set(q, qres)
+                return !qres.result || !areTwoRelationsCompatible(resolved, q.resolved!).result
+            })
         const solveRecursiveConflicts: () => void
             = () => {
                 let nolongerQualified: ConceptQualification[]
                 do {
-                    nolongerQualified = Array.from(maybeQualified).filter(q => {
-                        const qres = verifyRelationsOnce(resolved, q)
-                        if (!qres.result) {
-                            unqualifiedResults.set(q, qres)
-                            return true
-                        }
-                        return !checkTwoRelationsCompatibility(resolved, q.resolved!).result
-                    })
+                    nolongerQualified = findNolongerQualified()
                     nolongerQualified.forEach(q => {
                         maybeQualified.delete(q)
                         notQualified.add(q)
-                        resolveMaybeQualified()
                     })
+                    resolveMaybeQualified()
                 } while (nolongerQualified.length)
             }
 
-        let newlyQualified: ConceptQualification[] = []
-        let incompatible: [ConceptQualification, ConsistencyResult][] = []
+        let newlyQualified: ConceptQualification[]
+        let incompatible: [ConceptQualification, ConsistencyResult][]
         do {
-            if (newlyQualified.length) {
-                newlyQualified.forEach(q => maybeQualified.add(q))
-                resolveMaybeQualified()
-            }
-            if (maybeQualified.size) solveRecursiveConflicts()
             incompatible = []
             newlyQualified = qualifications
                 .filter(q => !notQualified.has(q) && !maybeQualified.has(q))
                 .filter(q => {
-                    const res = verifyRelationsOnce(resolved, q)
+                    const res = verifyRelations(resolved, q)
                     if (!res.result) unqualifiedResults.set(q, res)
                     return res.result
                 })
                 .filter(q => {
-                    const res = checkTwoRelationsCompatibility(resolved, q.resolved!)
+                    const res = areTwoRelationsCompatible(resolved, q.resolved!)
                     if (!res.result) incompatible.push([q, res])
                     return res.result
                 })
+            if (newlyQualified.length) {
+                appendSet(maybeQualified, newlyQualified)
+                resolveMaybeQualified()
+            }
+            if (maybeQualified.size) solveRecursiveConflicts()
         } while (newlyQualified.length)
         return {
             resolved,

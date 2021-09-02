@@ -1,6 +1,7 @@
 import { equal, notEqual, ok } from "assert";
-import { Concept, ConceptRelations, ContextVerifyingResult, initRelations, verifyRelationsInContext } from "./deducer";
-import { analyzeCst, ConceptContext, parse } from "./dsl";
+import { ContextVerifyingResult, verifyRelationsInContext } from "./deducer";
+import { analyzeCst, parse } from "./dsl";
+import { Concept, ConceptContext, ConceptRelations, initRelations } from "./data";
 
 const map_example = `
 ?@Mode

@@ -1,7 +1,8 @@
 import { CstNode, ILexingError, IRecognitionException, IToken } from "chevrotain"
-import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, Concept, ConceptRelations, ConceptDeclaration, ConceptGroup, ConceptQualification, verifyRelationsInContext, initConcept, initQualification, appendQualificationDeclarations } from "./deducer"
+import { verifyRelationsInContext } from "./deducer"
 import { lexer, tokens } from "./lexer"
 import { CorrelationParser } from "./parser"
+import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, ConceptDeclaration, ConceptQualification, Concept, initConcept, initQualification, appendQualificationDeclarations, ConceptRelations, ConceptGroup, ConceptContext, stringifyConcept, stringifyQualification } from "./data"
 import { EscapedModeNode, EscapedPrefixNode, EscapedLineNode, OrderPrefixNode, VerbPrefixNode, NameListPrefixNode, NormalLineNode, LinesNode, RootNode, SublinesNode, NameListNode } from "./typing"
 import { mapPushOrInit, appendMap, mapGetOrInit, assert } from "./utils"
 
@@ -35,11 +36,6 @@ type ConceptStatement = {
     qualification?: ConceptQualification
 }
 type StatementGraph = Map<ConceptDeclaration, ConceptStatement[]>
-
-export type ConceptContext = {
-    concepts: Map<string, Concept>
-    qualifications: ConceptQualification[]
-}
 
 const applyEscapedMode: (node: EscapedModeNode, target: NodeProps) => void
     = ({ children: { Canbe, Isnt } }, target) => {
@@ -235,7 +231,7 @@ const buildContext: (graph: CstNodeGraph) => ConceptContext
         return { concepts, qualifications }
     }
 
-const qualifyContext: (context: ConceptContext) => void
+const verifyContext: (context: ConceptContext) => void
     = context => {
         Array.from(context.concepts.values())
             .forEach(c => {
@@ -260,37 +256,9 @@ export const analyzeCst: (root: RootNode) => ConceptContext
         applyEscapedMode(EscapedMode[0], defaults)
         const nodeGraph = buildCompleteNodeGraph(Lines[0], defaults)
         const context = buildContext(nodeGraph)
-        qualifyContext(context)
+        verifyContext(context)
         return context
     }
-
-export const stringifyRelations: (r: ConceptRelations) => string
-    = r =>
-        `Relation(${Object.entries(r).map(([s, set]) => `${s}{${[...set].map(c => c.name).join('; ')}}`).join(', ')}}`
-
-export const stringifyConcept: (ctx: ConceptContext, c: Concept, showResolved?: boolean, showQualified?: boolean) => string
-    = (ctx, c, showResolved = false, showQualified = false) =>
-        `Concept(${c.name}, ${c.defaultMode}${showResolved ? `, ${stringifyRelations(c.resolved)}` : ''}, ${c.qualified && showQualified ? `, Qualified: [${[...c.qualified].map(q => ctx.qualifications.indexOf(q)).join(', ')
-            }]` : ''
-        })`
-
-export const stringifyDeclaration: (d: ConceptDeclaration) => string
-    = ({ verb, concept }) =>
-        `Declaration(${verb}, ${concept.name}`
-
-export const stringifyGroup: (g: ConceptGroup) => string
-    = ({ type, concepts }) =>
-        `Group(${type}, ${concepts.map(c => c.name).join(', ')}`
-
-export const stringifyQualification: (q: ConceptQualification) => string
-    = ({ negated, matcher: { concept, group }, declared, resolved }) =>
-        `Qualification(${negated}, ${concept ? concept.name : stringifyGroup(group!)}, ${declared.map(stringifyDeclaration)}, ${resolved ? stringifyRelations(resolved) : ''})`
-
-export const stringifyContext: (ctx: ConceptContext) => any
-    = ctx => ({
-        concepts: Array.from(ctx.concepts.values()).map(c => stringifyConcept(ctx, c, true, true)),
-        qualifications: ctx.qualifications.map((q, i) => [i, stringifyQualification(q)]),
-    })
 
 type ParseResult = {
     cst: CstNode,

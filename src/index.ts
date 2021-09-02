@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { inspect } from 'util';
-import { initRelations, verifyRelationsInContext } from './deducer';
-import { analyzeCst, stringifyContext, stringifyQualification, stringifyRelations } from './dsl';
-import { parse } from './dsl'
+import { verifyRelationsInContext } from './deducer';
+import { analyzeCst, parse } from './dsl'
+import { initRelations, stringifyContext, stringifyQualification, stringifyRelations } from './data';
 
 export const dslTest = () => {
     const input = readFileSync('./in.txt', 'utf-8')

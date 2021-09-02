@@ -92,7 +92,7 @@ describe("map example", () => {
     let assertIsntConcepts: (res: ContextVerifyingResult, ...names: string[]) => void
     let assertNoIsnt: (res: ContextVerifyingResult) => void
     before(() => {
-        console.time()
+        console.time('\tsetup time')
         const parsed = parse(map_example)
         equal(parsed.lexErrors.length, 0)
         equal(parsed.parseErrors.length, 0)
@@ -113,13 +113,13 @@ describe("map example", () => {
             names.forEach(n => ok(res.resolved.isnt.has(concept(n))))
         assertNoIsnt = res =>
             equal(res.resolved.isnt.size, 0)
-        console.timeEnd()
+        console.timeEnd('\tsetup time')
     })
     beforeEach(() => {
-        console.time()
+        console.time('\tcase time')
     })
     afterEach(() => {
-        console.timeEnd()
+        console.timeEnd('\tcase time')
     })
     it("lake is area and geographic", () => {
         const rel = relationsWith("map_item", "lake")

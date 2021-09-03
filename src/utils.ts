@@ -30,14 +30,16 @@ export const subtract
 
 export function appendSet<T>(set0: Set<T>, array: Array<T>): Set<T>
 export function appendSet<T>(set0: Set<T>, set1: Set<T>): Set<T>
-export function appendSet<T>(set0: Set<T>, collection: any): Set<T> {
-    return collection.forEach((v: T) => set0.add(v))
+export function appendSet<T>(set0: Set<T>, collection: Array<T> | Set<T>): Set<T> {
+    collection.forEach((v: T) => set0.add(v))
+    return set0
 }
 
 export function popSet<T>(set0: Set<T>, array: Array<T>): Set<T>
 export function popSet<T>(set0: Set<T>, set1: Set<T>): Set<T>
-export function popSet<T>(set0: Set<T>, collection: any): Set<T> {
-    return collection.forEach((v: T) => set0.delete(v))
+export function popSet<T>(set0: Set<T>, collection: Array<T> | Set<T>): Set<T> {
+    collection.forEach((v: T) => set0.delete(v))
+    return set0
 }
 
 export const arrayFilterInSet = <T>(arr: T[], set: Set<T>) =>

@@ -1,5 +1,5 @@
 import { CstNode, ILexingError, IRecognitionException, IToken } from "chevrotain"
-import { verifyRelationsInContext } from "./deducer"
+import { isQualificationSelfConsistent, verifyRelationsInContext } from "./deducer"
 import { lexer, tokens } from "./lexer"
 import { CorrelationParser } from "./parser"
 import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, ConceptDeclaration, ConceptQualification, Concept, initConcept, initQualification, appendQualificationDeclarations, ConceptRelations, ConceptGroup, ConceptContext, stringifyConcept, stringifyQualification } from "./data"
@@ -37,6 +37,7 @@ type ConceptStatement = {
 }
 type StatementGraph = Map<ConceptDeclaration, ConceptStatement[]>
 
+//#region Apply escaped line
 const applyEscapedMode: (node: EscapedModeNode, target: NodeProps) => void
     = ({ children: { Canbe, Isnt } }, target) => {
         if (Canbe) {
@@ -64,7 +65,9 @@ const applyEscapedLine: (node: EscapedLineNode, target: NodeProps) => void
             applyEscapedPrefix(EscapedPrefix[0], target)
         }
     }
+//#endregion
 
+//#region Get line parts
 const getOrder: (defaults: NodeProps, nodes?: OrderPrefixNode[]) => ConceptOrder | undefined
     = (defaults, nodes) => {
         if (nodes) {
@@ -116,6 +119,7 @@ const getName: (name?: IToken[]) => string | undefined
     }
 const getNameList: (name?: IToken[]) => string[] | undefined
     = name => name?.map(token => token.image)
+//#endregion
 
 const lineToCstNode: (node: NormalLineNode, defaults: NodeProps) => FormattedCstNode
     = ({ children: { OrderPrefix, VerbPrefix, Not, Name, NameList, Sublines } }, defaults) => {
@@ -196,9 +200,9 @@ const conceptualizeNode: (fcn: FormattedCstNode, doneConcepts: Map<string, Conce
         return declaration ? { declaration } : { qualification }
     }
 
-const passDownDeclaration: (graph: StatementGraph) => Set<ConceptQualification>
+const passDownDeclaration: (graph: StatementGraph) => ConceptQualification[]
     = graph => {
-        const res = new Set<ConceptQualification>()
+        const res: ConceptQualification[] = []
         const rootDeclarations = new Set<ConceptDeclaration>(graph.keys())
         Array.from(graph.values()).forEach(v =>
             v.filter(s => s.declaration).forEach(s => rootDeclarations.delete(s.declaration!)))
@@ -209,11 +213,13 @@ const passDownDeclaration: (graph: StatementGraph) => Set<ConceptQualification>
                 } else {
                     assert(qualification)
                     appendQualificationDeclarations(qualification, stack)
-                    res.add(qualification)
+                    res.push(qualification)
                 }
             })
         }
         rootDeclarations.forEach(d => visitDeclaration(d, [d]))
+        if (res.some(q => !isQualificationSelfConsistent(q).result))
+            throw new Error('Inconsistent qualification found')
         return res
     }
 
@@ -227,7 +233,7 @@ const buildContext: (graph: CstNodeGraph) => ConceptContext
         Array.from(graph.entries()).forEach(([k, arr]) =>
             conceptGraph.set(statementGetOrInit(k).declaration!, arr.map(statementGetOrInit)))
 
-        const qualifications = Array.from(passDownDeclaration(conceptGraph))
+        const qualifications = passDownDeclaration(conceptGraph)
         return { concepts, qualifications }
     }
 
@@ -235,11 +241,11 @@ const verifyContext: (context: ConceptContext) => void
     = context => {
         Array.from(context.concepts.values())
             .forEach(c => {
-                const { resolved, qualified, incompatible } = verifyRelationsInContext(c.resolved, context.qualifications)
+                const { resolved, qualified, incompatible } = verifyRelationsInContext(c.resolved, context)
                 c.resolved = resolved
                 c.qualified = qualified
                 if (incompatible.length) {
-                    console.log("Warning: Exited with incompatible ",
+                    console.log("Warning: Exited with incompatible",
                         incompatible.map(([q, r]) =>
                             [stringifyConcept(context, c, true, true), stringifyQualification(q)]))
                 }

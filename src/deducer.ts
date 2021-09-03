@@ -1,6 +1,6 @@
 "use strict"
-import { ConceptRelations, Concept, ConceptQualification, ConceptAssertions, ConceptGroupType, appendRelations, cloneRelations } from "./data"
-import { doesArrayIntersectSet, isArrayInSet, arrayIntersectSetCount, assert, intersect, appendSet, arrayFilterInSet, arrayFilterNotInSet } from "./utils"
+import { ConceptRelations, Concept, ConceptQualification, ConceptAssertions, ConceptGroupType, appendRelations, cloneRelations, ConceptContext } from "./data"
+import { doesArrayIntersectSet, isArrayInSet, arrayIntersectSetCount, assert, intersect, appendSet, arrayFilterInSet, arrayFilterNotInSet, popSet } from "./utils"
 
 export type ConsistencyResult = {
     inconsistency: ConceptAssertions
@@ -17,14 +17,14 @@ export const areTwoRelationsCompatible: (rel0: ConceptRelations, rel1: ConceptRe
             is: intersect(is, _isnt),
             isnt: intersect(isnt, _is),
         })
-export const isQualificationConsistent: (q: ConceptQualification) => ConsistencyResult
+export const isQualificationSelfConsistent: (q: ConceptQualification) => ConsistencyResult
     = ({ negated, matcher: { concept, group }, resolved }) => {
         const inconsistency = areTwoRelationsCompatible(resolved, resolved).inconsistency
         const { is, isnt } = resolved
 
         if (concept) {
-            if ((negated ? isnt : is).has(concept))
-                (negated ? inconsistency.isnt : inconsistency.is).add(concept)
+            if ((negated ? is : isnt).has(concept))
+                (negated ? inconsistency.is : inconsistency.isnt).add(concept)
         } else {
             assert(group)
             const { type, concepts } = group
@@ -110,20 +110,31 @@ export const verifyRelations: (relations: ConceptRelations, qualification: Conce
         return initVerifyingResult(missing, redundant)
     }
 
+export const assertTillVerified: (rel: ConceptRelations, qualification: ConceptQualification) => ConceptRelations
+    = (rel, q) => {
+        const res = cloneRelations(rel)
+        for (let vres: VerifyingResult; !(vres = verifyRelations(res, q)).result;) {
+            if (vres.missing.size) res.is.add(Array.from(vres.missing)[0])
+            else if (vres.redundant.size) res.is.delete(Array.from(vres.redundant)[0])
+        }
+        return res
+    }
+
 export type ContextVerifyingResult = {
+    base: ConceptRelations,
     resolved: ConceptRelations,
     qualified: ConceptQualification[],
     unqualified: [ConceptQualification, VerifyingResult][],
     incompatible: [ConceptQualification, ConsistencyResult][],
 }
-export const verifyRelationsInContext: (relations: ConceptRelations, qualifications: ConceptQualification[]) => ContextVerifyingResult
-    = (relations, qualifications) => {
-        let resolved = cloneRelations(relations)
+export const verifyRelationsInContext: (rel: ConceptRelations, ctx: ConceptContext) => ContextVerifyingResult
+    = (base, { qualifications }) => {
+        let resolved = cloneRelations(base)
         const maybeQualified: Set<ConceptQualification> = new Set()
         const notQualified: Set<ConceptQualification> = new Set()
         const unqualifiedResults: Map<ConceptQualification, VerifyingResult> = new Map()
         const resolveMaybeQualified = () => {
-            resolved = cloneRelations(relations)
+            resolved = cloneRelations(base)
             appendRelations(resolved, ...Array.from(maybeQualified).map(q => q.resolved))
         }
         const findNolongerQualified: () => ConceptQualification[]
@@ -137,12 +148,10 @@ export const verifyRelationsInContext: (relations: ConceptRelations, qualificati
                 let nolongerQualified: ConceptQualification[]
                 do {
                     nolongerQualified = findNolongerQualified()
-                    nolongerQualified.forEach(q => {
-                        maybeQualified.delete(q)
-                        notQualified.add(q)
-                    })
-                    resolveMaybeQualified()
+                    popSet(maybeQualified, nolongerQualified)
+                    appendSet(notQualified, nolongerQualified)
                 } while (nolongerQualified.length)
+                resolveMaybeQualified()
             }
 
         let newlyQualified: ConceptQualification[]
@@ -168,6 +177,7 @@ export const verifyRelationsInContext: (relations: ConceptRelations, qualificati
             if (maybeQualified.size) solveRecursiveConflicts()
         } while (newlyQualified.length)
         return {
+            base,
             resolved,
             qualified: Array.from(maybeQualified),
             unqualified: Array.from(unqualifiedResults).filter(([q]) => !maybeQualified.has(q)),

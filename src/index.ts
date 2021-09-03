@@ -5,7 +5,7 @@ import { analyzeCst, parse } from './dsl'
 import { initRelations, stringifyContext, stringifyQualification, stringifyRelations } from './data';
 
 export const dslTest = () => {
-    const input = readFileSync('./in.txt', 'utf-8')
+    const input = readFileSync('./examples/map.txt', 'utf-8')
     const parsed = parse(input)
     // console.log(JSON.stringify(parsed))
     if (parsed.lexErrors.length) console.error(parsed.lexErrors)
@@ -17,7 +17,7 @@ export const dslTest = () => {
     rel.is.add(ctx.concepts.get("map_item")!)
     rel.is.add(ctx.concepts.get("path")!)
     rel.is.add(ctx.concepts.get("lake")!)
-    const qualified = verifyRelationsInContext(rel, ctx.qualifications)
+    const qualified = verifyRelationsInContext(rel, ctx)
     console.log(qualified.qualified.map(q => stringifyQualification(q)))
     console.log(stringifyRelations(qualified.resolved))
     console.log(qualified.incompatible)

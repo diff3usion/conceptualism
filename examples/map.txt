@@ -1,29 +1,29 @@
 ?@Mode
 >+@Prefix
 
-_map_label {
+_map_label_type {
     ^site, path, area
 }
-_non_map_label {
+_not_map_label_type {
     ~|site, path, area
 }
-_origin {
+_author_type {
     ^natural, artificial
 }
-_non_origin {
+_not_author_type {
     ~|natural, artificial
 }
-_info_type {
+_existence_form {
     ^geographic, structural
 }
-_non_info_type {
+_not_existence_form {
     ~|geographic, structural
 }
 
 -map_item {
-    ~|_map_label, _non_map_label
-    ~|_origin, _non_origin
-    ~|_info_type, _non_info_type
+    ~|_map_label_type, _not_map_label_type
+    ~|_author_type, _not_author_type
+    ~|_existence_form, _not_existence_form
 }
 
 artificial {
@@ -54,21 +54,27 @@ artificial {
         }
     }
 }
+-biome_related {
+    ~|biome_related, plain
+}
+biome_related {
+    plain
+}
 geographic {
-    biome_related {
-        plain
-    }
+    biome_related
     canyan
     peninsula
-    creek
-    river
+    -site {
+        creek
+        river
+    }
     -path {
         island
         floating_island
         pond
+        lake
     }
     area {
-        lake
         sea
         ocean
         continent

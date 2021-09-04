@@ -121,6 +121,7 @@ const getNameList: (name?: IToken[]) => string[] | undefined
     = name => name?.map(token => token.image)
 //#endregion
 
+//#region Traverse lines
 const lineToCstNode: (node: NormalLineNode, defaults: NodeProps) => FormattedCstNode
     = ({ children: { OrderPrefix, VerbPrefix, Not, Name, NameList, Sublines } }, defaults) => {
         const mode = defaults.mode
@@ -173,7 +174,9 @@ const buildCompleteNodeGraph: (node: LinesNode, defaults: NodeProps) => CstNodeG
         })
         return res
     }
+//#endregion
 
+//#region Fill data structures
 const conceptualizeNode: (fcn: FormattedCstNode, doneConcepts: Map<string, Concept>) => ConceptStatement
     = (fcn, doneConcepts) => {
         let declaration: ConceptDeclaration | undefined, qualification: ConceptQualification | undefined
@@ -251,6 +254,7 @@ const verifyContext: (context: ConceptContext) => void
                 }
             })
     }
+//#endregion
 
 export const analyzeCst: (root: RootNode) => ConceptContext
     = ({ children: { EscapedMode, Lines } }) => {

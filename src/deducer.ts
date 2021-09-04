@@ -1,4 +1,3 @@
-"use strict"
 import { ConceptRelations, Concept, ConceptQualification, ConceptAssertions, ConceptGroupType, appendRelations, cloneRelations, ConceptContext } from "./data"
 import { doesArrayIntersectSet, isArrayInSet, arrayIntersectSetCount, assert, intersect, appendSet, arrayFilterInSet, arrayFilterNotInSet, popSet } from "./utils"
 

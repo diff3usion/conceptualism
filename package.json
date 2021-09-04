@@ -1,12 +1,19 @@
 {
-  "name": "correlation",
+  "name": "conceptualism",
   "version": "0.0.1",
   "description": "DSL for describing and deducing the relations of concepts",
-  "main": "index.js",
+  "author": "diff3usion",
   "license": "MIT",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "files": [
+    "build/**/*"
+  ],
   "scripts": {
     "start": "ts-node ./src/index.ts",
-    "test": "mocha"
+    "test": "mocha",
+    "build": "tsc",
+    "clean": "tsc --build --clean"
   },
   "dependencies": {
     "chevrotain": "^9.0.2"
@@ -17,5 +24,9 @@
     "mocha": "^9.0.3",
     "ts-node": "^10.1.0",
     "typescript": "^4.3.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diff3usion/conceptualism.git"
   }
 }

@@ -1,4 +1,6 @@
 #
+import { CstParser, TokenType } from "chevrotain";
+import { And, Canbe, Cascading, Comma, Escape, Is, Isnt, LCurly, ModeToken, Name, Not, Oneof, Or, PrefixToken, RCurly, Reverse, Semicolon } from './lexer'
 export class CorrelationParser extends CstParser {
     constructor(tokens: TokenType[]) {
         super(tokens, {
@@ -32,7 +34,7 @@ NameList {
 EscapedPrefix {
     ?*OrderPrefix
     ?*VerbPrefix
-    ?*_Not
+    ?_Not
     ?*NameListPrefix
     _Escape
     _PrefixToken
@@ -49,16 +51,19 @@ EscapedLine {
 }
 Sublines {
     _LCurly
-    *Lines
+    0+ {
+        ?*NormalLine
+        ?_Semicolon
+    }
     _RCurly
 }
 NormalLine {
     ?*OrderPrefix
     ?*VerbPrefix
-    ?*_Not
+    ?_Not
     |\(><NameList)*NameList
      \_Name
-    ?Sublines
+    ?*Sublines
 }
 Line {
     |\(><EscapedLine)*EscapedLine

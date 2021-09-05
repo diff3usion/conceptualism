@@ -2,8 +2,29 @@
  * This file is generated with meta-chevrotain
  */
 
-import { CstParser, TokenType } from "chevrotain";
-import { And, Canbe, Cascading, Comma, Escape, Is, Isnt, LCurly, ModeToken, Name, Not, Oneof, Or, PrefixToken, RCurly, Reverse, Semicolon } from './lexer'
+import {
+    CstParser,
+    TokenType
+} from "chevrotain";
+import {
+    And,
+    Canbe,
+    Cascading,
+    Comma,
+    Escape,
+    Is,
+    Isnt,
+    LCurly,
+    ModeToken,
+    Name,
+    Not,
+    Oneof,
+    Or,
+    PrefixToken,
+    RCurly,
+    Reverse,
+    Semicolon
+} from './lexer'
 export class CorrelationParser extends CstParser {
     constructor(tokens: TokenType[]) {
         super(tokens, {
@@ -46,28 +67,6 @@ export class CorrelationParser extends CstParser {
             }
         });
     });
-    private Sublines = this.RULE("Sublines", () => {
-        this.consume(0, LCurly);
-        this.MANY({
-            DEF: () => {
-                this.option(0, () => this.subrule(0, this.NormalLine));
-                this.option(1, () => this.consume(2, Semicolon));
-            }
-        });
-        this.consume(1, RCurly);
-    });
-    private NormalLine = this.RULE("NormalLine", () => {
-        this.option(0, () => this.subrule(0, this.OrderPrefix));
-        this.option(1, () => this.subrule(1, this.VerbPrefix));
-        this.option(2, () => this.consume(0, Not));
-        this.or(0, [{
-            ALT: () => this.subrule(2, this.NameList),
-            GATE: this.BACKTRACK(this.NameList)
-        }, {
-            ALT: () => this.consume(1, Name)
-        }, ]);
-        this.option(3, () => this.subrule(3, this.Sublines));
-    });
     private EscapedPrefix = this.RULE("EscapedPrefix", () => {
         this.option(0, () => this.subrule(0, this.OrderPrefix));
         this.option(1, () => this.subrule(1, this.VerbPrefix));
@@ -92,6 +91,28 @@ export class CorrelationParser extends CstParser {
             ALT: () => this.subrule(1, this.EscapedMode)
         }, ]);
     });
+    private Sublines = this.RULE("Sublines", () => {
+        this.consume(0, LCurly);
+        this.MANY({
+            DEF: () => {
+                this.option(0, () => this.subrule(0, this.NormalLine));
+                this.option(1, () => this.consume(2, Semicolon));
+            }
+        });
+        this.consume(1, RCurly);
+    });
+    private NormalLine = this.RULE("NormalLine", () => {
+        this.option(0, () => this.subrule(0, this.OrderPrefix));
+        this.option(1, () => this.subrule(1, this.VerbPrefix));
+        this.option(2, () => this.consume(0, Not));
+        this.or(0, [{
+            ALT: () => this.subrule(2, this.NameList),
+            GATE: this.BACKTRACK(this.NameList)
+        }, {
+            ALT: () => this.consume(1, Name)
+        }, ]);
+        this.option(3, () => this.subrule(3, this.Sublines));
+    });
     private Line = this.RULE("Line", () => {
         this.or(0, [{
             ALT: () => this.subrule(0, this.EscapedLine),
@@ -100,7 +121,7 @@ export class CorrelationParser extends CstParser {
             ALT: () => this.subrule(1, this.NormalLine)
         }, ]);
     });
-    private Lines = this.RULE("Lines", () => {
+    private RootLines = this.RULE("RootLines", () => {
         this.MANY({
             DEF: () => {
                 this.option(0, () => this.subrule(0, this.Line));
@@ -110,6 +131,6 @@ export class CorrelationParser extends CstParser {
     });
     public Root = this.RULE("Root", () => {
         this.subrule(0, this.EscapedMode);
-        this.subrule(1, this.Lines);
+        this.subrule(1, this.RootLines);
     });
 }

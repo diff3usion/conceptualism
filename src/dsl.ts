@@ -3,7 +3,7 @@ import { isQualificationSelfConsistent, verifyRelationsInContext } from "./deduc
 import { lexer, tokens } from "./lexer"
 import { CorrelationParser } from "./parser"
 import { ConceptOrder, ConceptVerb, ConceptGroupType, ConceptDefaultMode, ConceptDeclaration, ConceptQualification, Concept, initConcept, initQualification, appendQualificationDeclarations, ConceptRelations, ConceptGroup, ConceptContext, stringifyConcept, stringifyQualification } from "./data"
-import { EscapedModeNode, EscapedPrefixNode, EscapedLineNode, OrderPrefixNode, VerbPrefixNode, NameListPrefixNode, NormalLineNode, LinesNode, RootNode, SublinesNode, NameListNode } from "./typing"
+import { EscapedModeNode, EscapedPrefixNode, EscapedLineNode, OrderPrefixNode, VerbPrefixNode, NameListPrefixNode, NormalLineNode, RootNode, SublinesNode, RootLinesNode } from "./typing"
 import { mapPushOrInit, appendMap, mapGetOrInit, assert } from "./utils"
 
 type Prefixes = {
@@ -159,7 +159,7 @@ const buildNodeGraph: (node: NormalLineNode, defaults: NodeProps, built?: Format
         return res
     }
 
-const buildCompleteNodeGraph: (node: LinesNode, defaults: NodeProps) => CstNodeGraph
+const buildCompleteNodeGraph: (node: RootLinesNode, defaults: NodeProps) => CstNodeGraph
     = (node, defaults) => {
         const Line = node.children.Line
         const res: CstNodeGraph = new Map()
@@ -257,14 +257,14 @@ const verifyContext: (context: ConceptContext) => void
 //#endregion
 
 export const analyzeCst: (root: RootNode) => ConceptContext
-    = ({ children: { EscapedMode, Lines } }) => {
-        if (!EscapedMode || !Lines) return { concepts: new Map(), qualifications: [] }
+    = ({ children: { EscapedMode, RootLines } }) => {
+        if (!EscapedMode || !RootLines) return { concepts: new Map(), qualifications: [] }
         const defaults: NodeProps = {
             mode: ConceptDefaultMode.CanbeAnything,
         }
-        assert(EscapedMode[0] && Lines[0])
+        assert(EscapedMode[0] && RootLines[0])
         applyEscapedMode(EscapedMode[0], defaults)
-        const nodeGraph = buildCompleteNodeGraph(Lines[0], defaults)
+        const nodeGraph = buildCompleteNodeGraph(RootLines[0], defaults)
         const context = buildContext(nodeGraph)
         verifyContext(context)
         return context

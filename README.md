@@ -1,12 +1,12 @@
-[![npm](https://img.shields.io/npm/v/@diff3usion/correlation.svg )](https://www.npmjs.com/package/@diff3usion/correlation)
-# Correlation
+[![npm](https://img.shields.io/npm/v/conceptualism.svg )](https://www.npmjs.com/package/conceptualism)
+# Conceptualism
 A DSL for describing and deducing relationships between concept terms.
 
 This project is based on the [Chevrotain](https://github.com/Chevrotain/chevrotain) parser building toolkit, and [meta-chevrotain](https://github.com/diff3usion/meta-chevrotain) which is a DSL for generating chevrotain parser
 ## Introduction
-[Rail Diagram](https://diff3usion.github.io/correlation/)
+[Rail Diagram](https://diff3usion.github.io/corconceptualismrelation/)
 
-This DSL can be used to describe a context of correlated concept terms, usually names of sets, categories, or tags. 
+This DSL can be used to describe a context of related concept terms, usually names of sets, categories, or tags. 
 
 Then, it can deduce whether a object in such context is valid, and if it's valid, its implied relations of all concepts in the context. 
 

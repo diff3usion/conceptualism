@@ -453,10 +453,10 @@ make-error@^1.1.1:
   resolved "https://registry.yarnpkg.com/make-error/-/make-error-1.3.6.tgz#2eb2e37ea9b67c4891f684a1394799af484cf7a2"
   integrity sha512-s8UhlNe7vPKomQhC1qFelMokr/Sc3AgNbso3n74mVPA5LTZwkB9NlXf4XPamLxJE8h0gh73rM94xvwRT2CVInw==
 
-meta-chevrotain@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/meta-chevrotain/-/meta-chevrotain-0.0.3.tgz#5de4762664e5227a47bd6af1c128c12a8f0867ab"
-  integrity sha512-cyfNUfMDdjnY4Q2TwE+gvmTpEn2ziYYTpUBKNct/BbzXG3O74ZuGhvWwYOtr8Fi1gNgyh6841zADsIw4V3WkHw==
+meta-chevrotain@^0.0.4:
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/meta-chevrotain/-/meta-chevrotain-0.0.4.tgz#afad64f7d1a5443564aa0bce0eb16b8e7f2cb7db"
+  integrity sha512-1rI9sUDMv7X1mpkdOWjJqGoS6Jzc5jWnZAEjldFwCiyuIG8u56Tsh5hAMQ6CRv3+2GyCAThh9Yvug0rKvoti9A==
   dependencies:
     chevrotain "^9.0.2"
     js-beautify "^1.14.0"

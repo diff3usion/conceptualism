@@ -1,5 +1,5 @@
 {
-  "name": "conceptualism",
+  "name": "@diff3usion/conceptualism",
   "version": "0.0.2",
   "description": "DSL for describing and deducing the relations of concepts",
   "author": "diff3usion",

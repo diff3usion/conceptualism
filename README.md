@@ -1,4 +1,4 @@
-[![npm](https://img.shields.io/npm/v/conceptualism.svg )](https://www.npmjs.com/package/conceptualism)
+[![npm](https://img.shields.io/npm/v/@diff3usion/conceptualism.svg )](https://www.npmjs.com/package/@diff3usion/conceptualism)
 # Conceptualism
 A DSL for describing and deducing relationships between concept terms.
 
@@ -107,3 +107,7 @@ There is also another prefix for qualifications, the *negation prefix* "~", whic
 says "anything that is not one of geographic and structural is not a map item"
 
 ## To be continued...
+
+Just noticed the existance of [RDF, RDFS, and OWL](https://zhuanlan.zhihu.com/p/32122644), which fulfills the intention of this project. 
+
+Development is suspended, and project is archived. 
